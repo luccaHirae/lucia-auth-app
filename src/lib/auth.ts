@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { randomBytes, randomUUID } from 'crypto';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 // Session management
 export async function createSession(userId: string) {
