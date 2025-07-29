@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth';
 
 export async function middleware(request: NextRequest) {
-  const sessionId = request.cookies.get('session')?.value;
+  const session = request.cookies.get('session')?.value;
 
   // Public paths that don't require authentication
   const publicPaths = [
@@ -15,29 +14,28 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(path)
   );
 
-  if (!sessionId) {
+  if (!session) {
     if (isPublicPath) {
       return NextResponse.next();
     }
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  // Call internal API to check session
   try {
-    const session = await getSession(sessionId);
-
-    if (!session) {
-      // Invalid session, redirect to login
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/auth/me`, {
+      headers: { cookie: `session=${session}` },
+      cache: 'no-store',
+    });
+    if (!res.ok) {
       const response = NextResponse.redirect(new URL('/login', request.url));
       response.cookies.set('session', '', { maxAge: 0 });
       return response;
     }
-
-    // Valid session
     if (isPublicPath) {
-      // User is authenticated but trying to access public path, redirect to dashboard
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
-
     return NextResponse.next();
   } catch (error) {
     console.error('Middleware error:', error);
@@ -48,14 +46,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
