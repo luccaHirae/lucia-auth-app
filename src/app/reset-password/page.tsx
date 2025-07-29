@@ -5,6 +5,7 @@ import { passwordResetSchema, PasswordResetInput } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
@@ -86,9 +87,9 @@ export default function ResetPasswordPage() {
         </Button>
       </form>
       <p className='mt-4 text-center text-sm'>
-        <a href='/login' className='text-blue-600 hover:underline'>
+        <Link href='/login' className='text-blue-600 hover:underline'>
           Back to login
-        </a>
+        </Link>
       </p>
     </div>
   );

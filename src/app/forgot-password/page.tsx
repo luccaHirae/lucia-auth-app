@@ -7,6 +7,7 @@ import {
 } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function ForgotPasswordPage() {
   const {
@@ -67,9 +68,9 @@ export default function ForgotPasswordPage() {
         </Button>
       </form>
       <p className='mt-4 text-center text-sm'>
-        <a href='/login' className='text-blue-600 hover:underline'>
+        <Link href='/login' className='text-blue-600 hover:underline'>
           Back to login
-        </a>
+        </Link>
       </p>
     </div>
   );

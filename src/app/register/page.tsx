@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { registerSchema, RegisterInput } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function RegisterPage() {
   const {
@@ -90,9 +91,9 @@ export default function RegisterPage() {
       </form>
       <p className='mt-4 text-center text-sm'>
         Already have an account?{' '}
-        <a href='/login' className='text-blue-600 hover:underline'>
+        <Link href='/login' className='text-blue-600 hover:underline'>
           Login
-        </a>
+        </Link>
       </p>
     </div>
   );
