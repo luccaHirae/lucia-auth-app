@@ -6,6 +6,10 @@ import {
   PasswordResetRequestInput,
 } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { FormField } from '@/components/ui/form-field';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { AuthLayout } from '@/components/layout/auth-layout';
 import { useState } from 'react';
 import Link from 'next/link';
 
@@ -46,32 +50,42 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className='max-w-md mx-auto mt-16 p-8 border rounded shadow bg-white'>
-      <h1 className='text-2xl font-bold mb-6'>Forgot Password</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
-        <div>
-          <label className='block mb-1 font-medium'>Email</label>
-          <input
-            type='email'
-            {...register('email')}
-            className='w-full border rounded px-3 py-2'
-            autoComplete='email'
-          />
-          {errors.email && (
-            <p className='text-red-500 text-sm mt-1'>{errors.email.message}</p>
-          )}
-        </div>
-        {serverError && <p className='text-red-600'>{serverError}</p>}
-        {success && <p className='text-green-600'>{success}</p>}
-        <Button type='submit' disabled={isSubmitting} className='w-full'>
-          {isSubmitting ? 'Sending...' : 'Send Reset Link'}
-        </Button>
-      </form>
-      <p className='mt-4 text-center text-sm'>
-        <Link href='/login' className='text-blue-600 hover:underline'>
-          Back to login
-        </Link>
-      </p>
-    </div>
+    <AuthLayout
+      title='Forgot your password?'
+      subtitle='Enter your email address and we will send you a reset link'
+    >
+      <Card>
+        <CardContent className='pt-6'>
+          <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+            <FormField label='Email' id='email' error={errors.email?.message}>
+              <Input
+                type='email'
+                {...register('email')}
+                placeholder='Enter your email address'
+                autoComplete='email'
+                id='email'
+              />
+            </FormField>
+
+            {serverError && (
+              <p className='text-sm text-destructive'>{serverError}</p>
+            )}
+            {success && <p className='text-sm text-green-600'>{success}</p>}
+
+            <Button type='submit' disabled={isSubmitting} className='w-full'>
+              {isSubmitting ? 'Sending...' : 'Send reset link'}
+            </Button>
+          </form>
+        </CardContent>
+
+        <CardFooter className='flex-col space-y-2'>
+          <p className='text-sm text-muted-foreground text-center'>
+            <Link href='/login' className='text-primary hover:underline'>
+              Back to login
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
+    </AuthLayout>
   );
 }

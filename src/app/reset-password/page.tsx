@@ -3,6 +3,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { passwordResetSchema, PasswordResetInput } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { FormField } from '@/components/ui/form-field';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { AuthLayout } from '@/components/layout/auth-layout';
 import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -48,49 +52,62 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className='max-w-md mx-auto mt-16 p-8 border rounded shadow bg-white'>
-      <h1 className='text-2xl font-bold mb-6'>Reset Password</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
-        <input type='hidden' {...register('token')} value={token} />
-        <div>
-          <label className='block mb-1 font-medium'>New Password</label>
-          <input
-            type='password'
-            {...register('password')}
-            className='w-full border rounded px-3 py-2'
-            autoComplete='new-password'
-          />
-          {errors.password && (
-            <p className='text-red-500 text-sm mt-1'>
-              {errors.password.message}
-            </p>
-          )}
-        </div>
-        <div>
-          <label className='block mb-1 font-medium'>Confirm Password</label>
-          <input
-            type='password'
-            {...register('confirmPassword')}
-            className='w-full border rounded px-3 py-2'
-            autoComplete='new-password'
-          />
-          {errors.confirmPassword && (
-            <p className='text-red-500 text-sm mt-1'>
-              {errors.confirmPassword.message}
-            </p>
-          )}
-        </div>
-        {serverError && <p className='text-red-600'>{serverError}</p>}
-        {success && <p className='text-green-600'>{success}</p>}
-        <Button type='submit' disabled={isSubmitting} className='w-full'>
-          {isSubmitting ? 'Resetting...' : 'Reset Password'}
-        </Button>
-      </form>
-      <p className='mt-4 text-center text-sm'>
-        <Link href='/login' className='text-blue-600 hover:underline'>
-          Back to login
-        </Link>
-      </p>
-    </div>
+    <AuthLayout
+      title='Reset your password'
+      subtitle='Enter your new password below'
+    >
+      <Card>
+        <CardContent className='pt-6'>
+          <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+            <input type='hidden' {...register('token')} value={token} />
+
+            <FormField
+              label='New Password'
+              id='password'
+              error={errors.password?.message}
+            >
+              <Input
+                type='password'
+                {...register('password')}
+                placeholder='Enter your new password'
+                autoComplete='new-password'
+                id='password'
+              />
+            </FormField>
+
+            <FormField
+              label='Confirm Password'
+              id='confirm-password'
+              error={errors.confirmPassword?.message}
+            >
+              <Input
+                type='password'
+                {...register('confirmPassword')}
+                placeholder='Confirm your new password'
+                autoComplete='new-password'
+                id='confirm-password'
+              />
+            </FormField>
+
+            {serverError && (
+              <p className='text-sm text-destructive'>{serverError}</p>
+            )}
+            {success && <p className='text-sm text-green-600'>{success}</p>}
+
+            <Button type='submit' disabled={isSubmitting} className='w-full'>
+              {isSubmitting ? 'Resetting...' : 'Reset password'}
+            </Button>
+          </form>
+        </CardContent>
+
+        <CardFooter className='flex-col space-y-2'>
+          <p className='text-sm text-muted-foreground text-center'>
+            <Link href='/login' className='text-primary hover:underline'>
+              Back to login
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
+    </AuthLayout>
   );
 }
