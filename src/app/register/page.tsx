@@ -3,6 +3,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerSchema, RegisterInput } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { FormField } from '@/components/ui/form-field';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { AuthLayout } from '@/components/layout/auth-layout';
 import { useState } from 'react';
 import Link from 'next/link';
 
@@ -40,61 +44,71 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className='max-w-md mx-auto mt-16 p-8 border rounded shadow bg-white'>
-      <h1 className='text-2xl font-bold mb-6'>Register</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
-        <div>
-          <label className='block mb-1 font-medium'>Email</label>
-          <input
-            type='email'
-            {...register('email')}
-            className='w-full border rounded px-3 py-2'
-            autoComplete='email'
-          />
-          {errors.email && (
-            <p className='text-red-500 text-sm mt-1'>{errors.email.message}</p>
-          )}
-        </div>
-        <div>
-          <label className='block mb-1 font-medium'>Password</label>
-          <input
-            type='password'
-            {...register('password')}
-            className='w-full border rounded px-3 py-2'
-            autoComplete='new-password'
-          />
-          {errors.password && (
-            <p className='text-red-500 text-sm mt-1'>
-              {errors.password.message}
-            </p>
-          )}
-        </div>
-        <div>
-          <label className='block mb-1 font-medium'>Confirm Password</label>
-          <input
-            type='password'
-            {...register('confirmPassword')}
-            className='w-full border rounded px-3 py-2'
-            autoComplete='new-password'
-          />
-          {errors.confirmPassword && (
-            <p className='text-red-500 text-sm mt-1'>
-              {errors.confirmPassword.message}
-            </p>
-          )}
-        </div>
-        {serverError && <p className='text-red-600'>{serverError}</p>}
-        {success && <p className='text-green-600'>{success}</p>}
-        <Button type='submit' disabled={isSubmitting} className='w-full'>
-          {isSubmitting ? 'Registering...' : 'Register'}
-        </Button>
-      </form>
-      <p className='mt-4 text-center text-sm'>
-        Already have an account?{' '}
-        <Link href='/login' className='text-blue-600 hover:underline'>
-          Login
-        </Link>
-      </p>
-    </div>
+    <AuthLayout
+      title='Create an account'
+      subtitle='Enter your details to get started'
+    >
+      <Card>
+        <CardContent className='pt-6'>
+          <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+            <FormField label='Email' id='email' error={errors.email?.message}>
+              <Input
+                type='email'
+                {...register('email')}
+                placeholder='Enter your email'
+                autoComplete='email'
+                id='email'
+              />
+            </FormField>
+
+            <FormField
+              label='Password'
+              id='password'
+              error={errors.password?.message}
+            >
+              <Input
+                type='password'
+                {...register('password')}
+                placeholder='Create a password'
+                autoComplete='new-password'
+                id='password'
+              />
+            </FormField>
+
+            <FormField
+              label='Confirm Password'
+              id='confirm-password'
+              error={errors.confirmPassword?.message}
+            >
+              <Input
+                type='password'
+                {...register('confirmPassword')}
+                placeholder='Confirm your password'
+                autoComplete='new-password'
+                id='confirm-password'
+              />
+            </FormField>
+
+            {serverError && (
+              <p className='text-sm text-destructive'>{serverError}</p>
+            )}
+            {success && <p className='text-sm text-green-600'>{success}</p>}
+
+            <Button type='submit' disabled={isSubmitting} className='w-full'>
+              {isSubmitting ? 'Creating account...' : 'Create account'}
+            </Button>
+          </form>
+        </CardContent>
+
+        <CardFooter className='flex-col space-y-2'>
+          <p className='text-sm text-muted-foreground text-center'>
+            Already have an account?{' '}
+            <Link href='/login' className='text-primary hover:underline'>
+              Sign in
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
+    </AuthLayout>
   );
 }
