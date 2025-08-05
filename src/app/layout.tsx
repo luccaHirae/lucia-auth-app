@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { CleanupProvider } from '@/components/cleanup-provider';
 import './globals.css';
 
 const geist = Geist({
@@ -27,6 +28,7 @@ export default function RootLayout({
       <body
         className={`${geist.variable} ${geistMono.variable} font-sans antialiased`}
       >
+        <CleanupProvider />
         {children}
       </body>
     </html>
