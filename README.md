@@ -13,6 +13,9 @@ This app is a full-featured authentication system inspired by the [Lucia Auth Gu
 - 2FA setup with QR code and authenticator app
 - Password reset via email
 - Secure session management (cookie-based)
+- **Login throttling and rate limiting**
+- **Account lockout protection**
+- **IP-based rate limiting**
 - Responsive, accessible, and dark-mode-first UI
 
 ## Technologies Used
@@ -22,6 +25,7 @@ This app is a full-featured authentication system inspired by the [Lucia Auth Gu
 - **Authentication:** Custom implementation following Lucia Auth patterns (no external auth library)
 - **2FA:** TOTP (Time-based One-Time Password) with QR code
 - **Validation:** Zod, React Hook Form
+- **Rate Limiting:** Custom implementation with in-memory and database storage
 
 ## Architecture
 
@@ -41,7 +45,18 @@ This app is a full-featured authentication system inspired by the [Lucia Auth Gu
   4. **Password Reset:** User requests a reset link via email, sets a new password using the link.
   5. **Session Management:** Secure, httpOnly cookies are used for session tokens. Sessions are stored in the database.
 
+- **Rate Limiting & Security:**
+
+  - **Login Rate Limiting:** 5 attempts per 15 minutes per IP/email combination
+  - **2FA Rate Limiting:** 3 attempts per 15 minutes per user/IP combination
+  - **Password Reset Rate Limiting:** 3 requests per hour per email/IP combination
+  - **Account Lockout:** Automatic lockout after 10 failed login attempts per email
+  - **IP Blocking:** IP addresses blocked after 20 failed attempts
+  - **Login Attempt Tracking:** All login attempts (successful and failed) are logged with IP addresses
+  - **Automatic Cleanup:** Old rate limit entries and login attempts are automatically cleaned up
+
 - **Design System:**
+
   - Built with Tailwind CSS v4 using CSS-first configuration and custom CSS variables for theme tokens
   - All UI components use the design system for consistent dark/light theming, spacing, and typography
   - Responsive and accessible by default
