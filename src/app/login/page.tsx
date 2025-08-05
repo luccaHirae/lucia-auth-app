@@ -21,6 +21,10 @@ export default function LoginPage() {
   const [step, setStep] = useState<'login' | '2fa'>('login');
   const [userId, setUserId] = useState('');
   const [serverError, setServerError] = useState('');
+  const [rateLimitInfo, setRateLimitInfo] = useState<{
+    resetTime?: number;
+    remaining?: number;
+  }>({});
 
   // Step 1: Email/password
   const loginForm = useForm<LoginInput>({
@@ -34,6 +38,7 @@ export default function LoginPage() {
 
   const onLogin = async (data: LoginInput) => {
     setServerError('');
+    setRateLimitInfo({});
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -41,7 +46,14 @@ export default function LoginPage() {
         body: JSON.stringify(data),
       });
       const result = await res.json();
-      if (result.requiresTwoFactor) {
+
+      if (res.status === 429) {
+        // Rate limited
+        setServerError(result.error || 'Too many login attempts');
+        if (result.resetTime) {
+          setRateLimitInfo({ resetTime: result.resetTime });
+        }
+      } else if (result.requiresTwoFactor) {
         setUserId(result.userId);
         setStep('2fa');
       } else if (res.ok) {
@@ -56,6 +68,7 @@ export default function LoginPage() {
 
   const on2FA = async (data: TwoFactorInput) => {
     setServerError('');
+    setRateLimitInfo({});
     try {
       const res = await fetch('/api/auth/2fa/verify', {
         method: 'POST',
@@ -63,75 +76,44 @@ export default function LoginPage() {
         body: JSON.stringify({ ...data, userId }),
       });
       const result = await res.json();
-      if (res.ok) {
+
+      if (res.status === 429) {
+        // Rate limited
+        setServerError(result.error || 'Too many 2FA attempts');
+        if (result.resetTime) {
+          setRateLimitInfo({ resetTime: result.resetTime });
+        }
+      } else if (res.ok) {
         router.push('/dashboard');
       } else {
-        setServerError(result.error || '2FA failed');
+        setServerError(result.error || '2FA verification failed');
       }
     } catch (e) {
       setServerError('Something went wrong. Please try again.');
     }
   };
 
-  return (
-    <AuthLayout
-      title={step === 'login' ? 'Welcome back' : 'Two-factor authentication'}
-      subtitle={
-        step === 'login'
-          ? 'Enter your credentials to continue'
-          : 'Enter the 6-digit code from your authenticator app'
-      }
-    >
-      <Card>
-        <CardContent className='pt-6'>
-          {step === 'login' && (
-            <form
-              onSubmit={loginForm.handleSubmit(onLogin)}
-              className='space-y-4'
-            >
-              <FormField
-                label='Email'
-                id='email'
-                error={loginForm.formState.errors.email?.message}
-              >
-                <Input
-                  type='email'
-                  {...loginForm.register('email')}
-                  placeholder='Enter your email'
-                  autoComplete='email'
-                  id='email'
-                />
-              </FormField>
+  const formatTimeRemaining = (resetTime: number) => {
+    const now = Date.now();
+    const remaining = Math.max(0, resetTime - now);
+    const minutes = Math.ceil(remaining / (1000 * 60));
+    return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+  };
 
-              <FormField
-                label='Password'
-                id='password'
-                error={loginForm.formState.errors.password?.message}
-              >
-                <Input
-                  type='password'
-                  {...loginForm.register('password')}
-                  placeholder='Enter your password'
-                  autoComplete='current-password'
-                  id='password'
-                />
-              </FormField>
-
-              {serverError && (
-                <p className='text-sm text-destructive'>{serverError}</p>
-              )}
-
-              <Button
-                type='submit'
-                disabled={loginForm.formState.isSubmitting}
-                className='w-full'
-              >
-                {loginForm.formState.isSubmitting ? 'Signing in...' : 'Sign in'}
-              </Button>
-            </form>
-          )}
-
-          {step === '2fa' && (
+  if (step === '2fa') {
+    return (
+      <AuthLayout
+        title='Two-Factor Authentication'
+        subtitle='Enter the 6-digit code from your authenticator app'
+      >
+        <Card className='w-full max-w-md'>
+          <CardContent className='pt-6'>
+            <h1 className='text-2xl font-bold text-center mb-6'>
+              Two-Factor Authentication
+            </h1>
+            <p className='text-sm text-muted-foreground text-center mb-6'>
+              Enter the 6-digit code from your authenticator app
+            </p>
             <form
               onSubmit={twoFactorForm.handleSubmit(on2FA)}
               className='space-y-4'
@@ -146,41 +128,112 @@ export default function LoginPage() {
                   {...twoFactorForm.register('code')}
                   placeholder='Enter 6-digit code'
                   autoComplete='one-time-code'
-                  inputMode='numeric'
-                  maxLength={6}
                   id='code'
+                  maxLength={6}
                 />
               </FormField>
 
               {serverError && (
                 <p className='text-sm text-destructive'>{serverError}</p>
               )}
+              {rateLimitInfo.resetTime && (
+                <p className='text-sm text-muted-foreground'>
+                  Try again in {formatTimeRemaining(rateLimitInfo.resetTime)}
+                </p>
+              )}
 
               <Button
                 type='submit'
-                disabled={twoFactorForm.formState.isSubmitting}
                 className='w-full'
+                disabled={twoFactorForm.formState.isSubmitting}
               >
                 {twoFactorForm.formState.isSubmitting
                   ? 'Verifying...'
-                  : 'Verify 2FA'}
+                  : 'Verify'}
               </Button>
             </form>
-          )}
-        </CardContent>
-
-        <CardFooter className='flex-col space-y-2'>
-          <p className='text-sm text-muted-foreground text-center'>
-            <Link
-              href='/forgot-password'
-              className='text-primary hover:underline'
+          </CardContent>
+          <CardFooter className='flex justify-center'>
+            <Button
+              variant='ghost'
+              onClick={() => setStep('login')}
+              className='text-sm'
             >
-              Forgot password?
-            </Link>
-          </p>
-          <p className='text-sm text-muted-foreground text-center'>
-            Don&apos;t have an account?{' '}
-            <Link href='/register' className='text-primary hover:underline'>
+              Back to Login
+            </Button>
+          </CardFooter>
+        </Card>
+      </AuthLayout>
+    );
+  }
+
+  return (
+    <AuthLayout
+      title='Welcome back'
+      subtitle='Enter your credentials to continue'
+    >
+      <Card className='w-full max-w-md'>
+        <CardContent className='pt-6'>
+          <form
+            onSubmit={loginForm.handleSubmit(onLogin)}
+            className='space-y-4'
+          >
+            <FormField
+              label='Email'
+              id='email'
+              error={loginForm.formState.errors.email?.message}
+            >
+              <Input
+                type='email'
+                {...loginForm.register('email')}
+                placeholder='Enter your email'
+                autoComplete='email'
+                id='email'
+              />
+            </FormField>
+
+            <FormField
+              label='Password'
+              id='password'
+              error={loginForm.formState.errors.password?.message}
+            >
+              <Input
+                type='password'
+                {...loginForm.register('password')}
+                placeholder='Enter your password'
+                autoComplete='current-password'
+                id='password'
+              />
+            </FormField>
+
+            {serverError && (
+              <p className='text-sm text-destructive'>{serverError}</p>
+            )}
+            {rateLimitInfo.resetTime && (
+              <p className='text-sm text-muted-foreground'>
+                Try again in {formatTimeRemaining(rateLimitInfo.resetTime)}
+              </p>
+            )}
+
+            <Button
+              type='submit'
+              className='w-full'
+              disabled={loginForm.formState.isSubmitting}
+            >
+              {loginForm.formState.isSubmitting ? 'Logging in...' : 'Login'}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className='flex flex-col space-y-2'>
+          <Link
+            href='/forgot-password'
+            className='text-sm text-muted-foreground hover:text-foreground hover:underline'
+          >
+            Forgot your password?
+          </Link>
+          <p className='text-sm text-muted-foreground'>
+            Don't have an account?{' '}
+            <Link href='/register' className='text-foreground hover:underline'>
               Sign up
             </Link>
           </p>
